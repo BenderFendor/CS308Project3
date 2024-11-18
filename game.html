@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Fling Square Game</title>
+    <style>
+        canvas {
+            border: 4px solid black;
+            box-shadow: 5px 6px rgba(0, 0, 0, 0.5);
+            background-image: url("./emptybackground.png");
+            background-color: rgba(0, 0, 0, 0.8); /* Dark overlay as this is really ugly lowkey */
+            background-blend-mode: multiply;
+            background-size: cover;
+        }
+        .game-container {
+            position: relative;
+            display: inline-block;
+        }
+        
+        #score {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 24px;
+            color: white;
+            font-family: Alagard;
+            z-index: 10;
+            display: none;
+        }
+        
+        #start {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            padding: 8px 16px;
+            background-color: #533d09;
+            box-shadow: 5px 6px rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: Alagard;
+            font-size: 32px;
+            z-index: 10;
+        }
+        
+        #start:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <canvas id="game" width="1024" height="576"></canvas>
+        <div id="score">Score: 0</div>
+        <button id="start" onclick="initialize()">Start Game</button>
+    </div>
+    <audio id="bounce" preload="auto" style="display:none" src="bounce.mp3"></audio>
+    <audio id="scoresfx" preload="auto" style="display:none" src="score.wav"></audio>
+    <audio id="gameoversfx" preload="auto" style="display:none" src="gameover.wav"></audio>
+    <script src="Square.js"></script>
+    <script src="Obstacle.js"></script>
+    <script src="ScoreZone.js"></script>
+    <script>
+        var canvas = document.getElementById('game');
+        var ctx = canvas.getContext('2d');
+        var score = 0;
+        var obstacles = [];
+        var scoreZones = [];
+        var bounceSound = document.getElementById('bounce');
+        var scoreSound = document.getElementById('scoresfx');
+        var gameoverSound = document.getElementById('gameoversfx');
+        var playerSquare;
+        var gameInterval;
+        var animationFrameId;
+
+        var background = new Image();
+        background.src = "./voidbackground.webp"; // Scene 1 background
+
+
+        function initialize() {
+            // Show score display
+            document.getElementById('score').style.display = 'block';
+            document.getElementById('start').style.display = 'none';
+            // Clear existing game state
+            cancelAnimationFrame(animationFrameId);
+            clearInterval(gameInterval);
+            
+            // Reset game variables
+            score = 0;
+            obstacles = [];
+            scoreZones = [];
+            document.getElementById('score').innerText = 'Score: 0';
+            
+            // Create new player
+            playerSquare = new Square(100, canvas.height / 2 - 10, 20, 20);
+            
+            // Set up obstacle generation
+            gameInterval = setInterval(generateObstacle, 5000);
+            
+            // Start game loop
+            update();
+        }
+
+        // Mouse event listeners should be outside initialize and use the global playerSquare
+        canvas.addEventListener('mousedown', function(e) {
+            if (!playerSquare) return;
+            var rect = canvas.getBoundingClientRect();
+            var mouseX = e.clientX - rect.left;
+            var mouseY = e.clientY - rect.top;
+            
+            playerSquare.startDrag(mouseX, mouseY);
+        });
+
+        canvas.addEventListener('mousemove', function(e) {
+            if (!playerSquare) return;
+            if (playerSquare.isDragging) {
+                var rect = canvas.getBoundingClientRect();
+                var mouseX = e.clientX - rect.left;
+                var mouseY = e.clientY - rect.top;
+
+                playerSquare.drag(mouseX, mouseY);
+
+                draw();
+            }
+        });
+
+        canvas.addEventListener('mouseup', function(e) {
+            if (!playerSquare) return;
+            if (playerSquare.isDragging) {
+                var rect = canvas.getBoundingClientRect();
+                var mouseX = e.clientX - rect.left;
+                var mouseY = e.clientY - rect.top;
+
+                playerSquare.endDrag(mouseX, mouseY);
+            }
+        });
+
+        function generateObstacle() {
+            var gapHeight = 150;
+            var gapPosition = Math.random() * (canvas.height - gapHeight);
+
+            // Top obstacle
+            obstacles.push(new Obstacle(
+                canvas.width,
+                0,
+                20,
+                gapPosition
+            ));
+
+            // Bottom obstacle
+            obstacles.push(new Obstacle(
+                canvas.width,
+                gapPosition + gapHeight,
+                20,
+                canvas.height - gapPosition - gapHeight
+            ));
+
+            // Add score zone in the gap
+            scoreZones.push(new ScoreZone(
+                canvas.width,
+                gapPosition,
+                20,
+                gapHeight
+            ));
+        }
+
+        function update() {
+            if (!playerSquare) return;
+            playerSquare.update(canvas);
+
+            // Move and update obstacles
+            for (var i = obstacles.length - 1; i >= 0; i--) {
+                var obstacle = obstacles[i];
+                obstacle.x -= 2; // Move obstacle left
+
+                if (playerSquare.collidesWith(obstacle)) {
+                    gameOver();
+                    return;
+                }
+
+                if (obstacle.x + obstacle.width < 0) {
+                    obstacles.splice(i, 1);
+                }
+            }
+
+            // Move and update score zones
+            for (var i = scoreZones.length - 1; i >= 0; i--) {
+                var zone = scoreZones[i];
+                zone.x -= 2; // Move at same speed as obstacles
+
+                // Check if player passed through zone
+                if (!zone.counted && playerSquare.collidesWith(zone)) {
+                    score++;
+                    scoreSound.play();
+                    zone.counted = true;
+                }
+
+                // Remove off-screen zones
+                if (zone.x + zone.width < 0) {
+                    scoreZones.splice(i, 1);
+                }
+            }
+
+            // Update score display
+            document.getElementById('score').innerText = 'Score: ' + score;
+
+            draw();
+            animationFrameId = requestAnimationFrame(update);
+        }
+
+        // Update draw function
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(background, 0, 0, canvas.width, canvas.height); 
+
+            // Draw score zones first (behind everything)
+            scoreZones.forEach(zone => zone.draw(ctx));
+            
+            // Draw obstacles and player
+            obstacles.forEach(obstacle => obstacle.draw(ctx));
+            playerSquare.draw(ctx);
+        }
+    
+        function gameOver() {
+            cancelAnimationFrame(animationFrameId);
+            clearInterval(gameInterval);
+            gameoverSound.play();
+            
+            
+            document.getElementById('score').style.display = 'none';
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Display Game Over message
+            ctx.font = '48px Alagard';
+            ctx.fillStyle = 'white';
+            ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
+            ctx.font = '24px Alagard';
+            ctx.fillText('Final Score: ' + score, canvas.width / 2 - 50, canvas.height / 2 + 40);
+        }
+    </script>
+</body>
+</html>
