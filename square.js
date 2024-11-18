@@ -1,5 +1,5 @@
 class Square {
-    constructor(x, y, width, height,img) {
+    constructor(x, y, width, height, imgSrc) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -11,8 +11,13 @@ class Square {
         this.startY = 0;
         this.endX = 0;
         this.endY = 0;
-        this.img = new Image();
-        this.img.src = img;
+
+        if (imgSrc) {
+            this.img = new Image();
+            this.img.src = imgSrc;
+        } else {
+            this.img = null;
+        }
     }
 
     startDrag(mouseX, mouseY) {
@@ -79,8 +84,10 @@ class Square {
             ctx.stroke();
             ctx.setLineDash([]);
         }
-        if (this.img.complete) {
+        if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
             ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+        } else {
+            // Optionally draw a placeholder or do nothing
         }
     }
     collidesWith(other) {

@@ -47,6 +47,49 @@
         #start:hover {
             background-color: #45a049;
         }
+
+        #retry {
+            padding: 4px 8px;
+            background-color: #530909;
+            box-shadow: 5px 6px rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-family: Alagard;
+            font-size: 24px;
+        }
+        #retry:hover {
+            background-color: #d56f6f;
+        }
+
+        #game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 1024px; /* Match canvas width */
+            height: 576px; /* Match canvas height */
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            visibility: hidden;
+        }
+
+        #game-over-message {
+            font-size: 48px;
+            color: white;
+            font-family: Alagard;
+            margin-bottom: 20px;
+        }
+
+        #final-score {
+            font-size: 24px;
+            color: white;
+            font-family: Alagard;
+            margin-bottom: 40px;
+        }
     </style>
 </head>
 <body>
@@ -54,6 +97,11 @@
         <canvas id="game" width="1024" height="576"></canvas>
         <div id="score">Score: 0</div>
         <button id="start" onclick="initialize()">Start Game</button>
+        <div id="game-over-overlay">
+            <div id="game-over-message">Game Over</div>
+            <div id="final-score">Final Score: <span id="final-score-value"></span></div>
+            <button id="retry" onclick="initialize()">Retry Game</button>
+        </div>
     </div>
     <audio id="bounce" preload="auto" style="display:none" src="bounce.mp3"></audio>
     <audio id="scoresfx" preload="auto" style="display:none" src="score.wav"></audio>
@@ -76,17 +124,25 @@
 
         var god = new Image();
         god.src = "./god.png";
-        
+        god.onload = () => console.log("God image loaded");
+        god.onerror = () => console.error("Error loading god image");
+
         var background = new Image();
         background.src = "./voidbackground.webp"; // Scene 1 background
+        background.onload = () => console.log("Background image loaded");
+        background.onerror = () => console.error("Error loading background image");
 
         var obstacleImg = new Image();
-        obstacleImg.src = "./obstacle.png";  // Make sure this image exists in your directory
+        obstacleImg.src = "Obstacle.png";  // Make sure this image exists in your directory
+        obstacleImg.onload = () => console.log("Obstacle image loaded");
+        obstacleImg.onerror = () => console.error("Error loading obstacle image");
 
         function initialize() {
             // Show score display
             document.getElementById('score').style.display = 'block';
             document.getElementById('start').style.display = 'none';
+            document.getElementById('retry').style.display = 'none';
+            document.getElementById('game-over-overlay').style.visibility = 'hidden';
             // Clear existing game state
             cancelAnimationFrame(animationFrameId);
             clearInterval(gameInterval);
@@ -151,7 +207,7 @@
                 0,
                 20,
                 gapPosition,
-                obstacleImg
+                obstacleImg.src  // Pass the image source string
             ));
 
             obstacles.push(new Obstacle(
@@ -159,7 +215,7 @@
                 gapPosition + gapHeight,
                 20,
                 canvas.height - gapPosition - gapHeight,
-                obstacleImg
+                obstacleImg.src  // Pass the image source string
             ));
 
             // Add score zone in the gap
@@ -235,15 +291,9 @@
             
             
             document.getElementById('score').style.display = 'none';
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-            // Display Game Over message
-            ctx.font = '48px Alagard';
-            ctx.fillStyle = 'white';
-            ctx.fillText('Game Over', canvas.width / 2 - 100, canvas.height / 2);
-            ctx.font = '24px Alagard';
-            ctx.fillText('Final Score: ' + score, canvas.width / 2 - 50, canvas.height / 2 + 40);
+            document.getElementById('game-over-overlay').style.visibility = 'visible';
+            document.getElementById('retry').style.display = 'block';
+            document.getElementById('final-score-value').innerText = score;
         }
     </script>
 </body>
