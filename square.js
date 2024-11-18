@@ -1,5 +1,5 @@
 class Square {
-    constructor(x, y, width, height, color = 'blue') {
+    constructor(x, y, width, height,img) {
         this.x = x;
         this.y = y;
         this.width = width;
@@ -11,7 +11,8 @@ class Square {
         this.startY = 0;
         this.endX = 0;
         this.endY = 0;
-        this.color = color;
+        this.img = new Image();
+        this.img.src = img;
     }
 
     startDrag(mouseX, mouseY) {
@@ -72,14 +73,15 @@ class Square {
         if (this.isDragging) {
             ctx.setLineDash([5, 5]);
             ctx.beginPath();
+            ctx.strokeStyle = 'white';
             ctx.moveTo(this.startX, this.startY);
             ctx.lineTo(this.endX, this.endY);
             ctx.stroke();
             ctx.setLineDash([]);
         }
-    
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.img.complete) {
+            ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+        }
     }
     collidesWith(other) {
         // Check if the other object is a ScoreZone

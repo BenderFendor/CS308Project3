@@ -1,10 +1,11 @@
 class Obstacle extends Square {
-    constructor(x, y, width, height) {
-        super(x, y, width, height, 'gray');
+    constructor(x, y, width, height, img) {
+        super(x, y, width, height, img);
     }
     
     draw(ctx) {
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        if (this.img && this.img.complete) {
+            ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+        }
     }
 }

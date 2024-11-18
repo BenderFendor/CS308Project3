@@ -74,9 +74,14 @@
         var gameInterval;
         var animationFrameId;
 
+        var god = new Image();
+        god.src = "./god.png";
+        
         var background = new Image();
         background.src = "./voidbackground.webp"; // Scene 1 background
 
+        var obstacleImg = new Image();
+        obstacleImg.src = "./obstacle.png";  // Make sure this image exists in your directory
 
         function initialize() {
             // Show score display
@@ -93,7 +98,7 @@
             document.getElementById('score').innerText = 'Score: 0';
             
             // Create new player
-            playerSquare = new Square(100, canvas.height / 2 - 10, 20, 20);
+            playerSquare = new Square(100, canvas.height / 2 - 10, 50, 50, god.src);
             
             // Set up obstacle generation
             gameInterval = setInterval(generateObstacle, 5000);
@@ -140,20 +145,21 @@
             var gapHeight = 150;
             var gapPosition = Math.random() * (canvas.height - gapHeight);
 
-            // Top obstacle
+            // Update obstacle creation to include image
             obstacles.push(new Obstacle(
                 canvas.width,
                 0,
                 20,
-                gapPosition
+                gapPosition,
+                obstacleImg
             ));
 
-            // Bottom obstacle
             obstacles.push(new Obstacle(
                 canvas.width,
                 gapPosition + gapHeight,
                 20,
-                canvas.height - gapPosition - gapHeight
+                canvas.height - gapPosition - gapHeight,
+                obstacleImg
             ));
 
             // Add score zone in the gap
