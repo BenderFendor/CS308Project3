@@ -2,101 +2,18 @@
 <html>
 <head>
     <title>Fling Square Game</title>
-    <style>
-        canvas {
-            border: 4px solid black;
-            box-shadow: 5px 6px rgba(0, 0, 0, 0.5);
-            background-image: url("./emptybackground.png");
-            background-color: rgba(0, 0, 0, 0.8); /* Dark overlay as this is really ugly lowkey */
-            background-blend-mode: multiply;
-            background-size: cover;
-        }
-        .game-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        #score {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            font-size: 24px;
-            color: white;
-            font-family: Alagard;
-            z-index: 10;
-            display: none;
-        }
-        
-        #start {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            padding: 8px 16px;
-            background-color: #533d09;
-            box-shadow: 5px 6px rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-family: Alagard;
-            font-size: 32px;
-            z-index: 10;
-        }
-        
-        #start:hover {
-            background-color: #45a049;
-        }
-
-        #retry {
-            padding: 4px 8px;
-            background-color: #530909;
-            box-shadow: 5px 6px rgba(0, 0, 0, 0.5);
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-family: Alagard;
-            font-size: 24px;
-        }
-        #retry:hover {
-            background-color: #d56f6f;
-        }
-
-        #game-over-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 1024px; /* Match canvas width */
-            height: 576px; /* Match canvas height */
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            visibility: hidden;
-        }
-
-        #game-over-message {
-            font-size: 48px;
-            color: white;
-            font-family: Alagard;
-            margin-bottom: 20px;
-        }
-
-        #final-score {
-            font-size: 24px;
-            color: white;
-            font-family: Alagard;
-            margin-bottom: 40px;
-        }
-    </style>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
-    <div class="game-container">
+    <div class="game-container"> <!-- I added this as it was needed to have everything centered -->
         <canvas id="game" width="1024" height="576"></canvas>
         <div id="score">Score: 0</div>
         <button id="start" onclick="initialize()">Start Game</button>
+        <div id="game-info">
+            <p>
+                The goal of this game is to get your character through the green score zones and not hit the brick walls.<br> You hold and drag your mouse to point where you want your character to go.
+            </p>
+        </div>
         <div id="game-over-overlay">
             <div id="game-over-message">Game Over</div>
             <div id="final-score">Final Score: <span id="final-score-value"></span></div>
@@ -124,16 +41,16 @@
 
         var god = new Image();
         god.src = "./god.png";
-        god.onload = () => console.log("God image loaded");
+        god.onload = () => console.log("God image loaded"); // Need this for error checking
         god.onerror = () => console.error("Error loading god image");
 
         var background = new Image();
-        background.src = "./voidbackground.webp"; // Scene 1 background
+        background.src = "./voidbackground.webp"; 
         background.onload = () => console.log("Background image loaded");
         background.onerror = () => console.error("Error loading background image");
 
         var obstacleImg = new Image();
-        obstacleImg.src = "Obstacle.png";  // Make sure this image exists in your directory
+        obstacleImg.src = "Obstacle.png";  
         obstacleImg.onload = () => console.log("Obstacle image loaded");
         obstacleImg.onerror = () => console.error("Error loading obstacle image");
 
@@ -141,6 +58,7 @@
             // Show score display
             document.getElementById('score').style.display = 'block';
             document.getElementById('start').style.display = 'none';
+            document.getElementById('game-info').style.display = 'none';    
             document.getElementById('retry').style.display = 'none';
             document.getElementById('game-over-overlay').style.visibility = 'hidden';
             // Clear existing game state
@@ -163,8 +81,7 @@
             update();
         }
 
-        // Mouse event listeners should be outside initialize and use the global playerSquare
-        canvas.addEventListener('mousedown', function(e) {
+        canvas.addEventListener('mousedown', function(e) { // I needed this for like the angry bird clone drag thing
             if (!playerSquare) return;
             var rect = canvas.getBoundingClientRect();
             var mouseX = e.clientX - rect.left;
@@ -173,7 +90,7 @@
             playerSquare.startDrag(mouseX, mouseY);
         });
 
-        canvas.addEventListener('mousemove', function(e) {
+        canvas.addEventListener('mousemove', function(e) { // Same here
             if (!playerSquare) return;
             if (playerSquare.isDragging) {
                 var rect = canvas.getBoundingClientRect();
@@ -197,34 +114,17 @@
             }
         });
 
-        function generateObstacle() {
+        function generateObstacle() { // I spawn this on a interval and this is the function that does all for it
             var gapHeight = 150;
             var gapPosition = Math.random() * (canvas.height - gapHeight);
 
             // Update obstacle creation to include image
-            obstacles.push(new Obstacle(
-                canvas.width,
-                0,
-                20,
-                gapPosition,
-                obstacleImg.src  // Pass the image source string
-            ));
+            obstacles.push(new Obstacle(canvas.width,0,20,gapPosition,obstacleImg.src));// Pass the image source string
 
-            obstacles.push(new Obstacle(
-                canvas.width,
-                gapPosition + gapHeight,
-                20,
-                canvas.height - gapPosition - gapHeight,
-                obstacleImg.src  // Pass the image source string
-            ));
+            obstacles.push(new Obstacle(canvas.width,gapPosition + gapHeight,20,canvas.height - gapPosition - gapHeight,obstacleImg.src));
 
             // Add score zone in the gap
-            scoreZones.push(new ScoreZone(
-                canvas.width,
-                gapPosition,
-                20,
-                gapHeight
-            ));
+            scoreZones.push(new ScoreZone(canvas.width,gapPosition,20,gapHeight));
         }
 
         function update() {
@@ -241,7 +141,7 @@
                     return;
                 }
 
-                if (obstacle.x + obstacle.width < 0) {
+                if (obstacle.x + obstacle.width < 0) { // Removed the ones off screen
                     obstacles.splice(i, 1);
                 }
             }
@@ -271,7 +171,6 @@
             animationFrameId = requestAnimationFrame(update);
         }
 
-        // Update draw function
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(background, 0, 0, canvas.width, canvas.height); 
@@ -288,8 +187,9 @@
             cancelAnimationFrame(animationFrameId);
             clearInterval(gameInterval);
             gameoverSound.play();
-            
-            
+
+            // Draws the overlay and removes the score on the top right corner
+
             document.getElementById('score').style.display = 'none';
             document.getElementById('game-over-overlay').style.visibility = 'visible';
             document.getElementById('retry').style.display = 'block';

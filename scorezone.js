@@ -6,6 +6,8 @@ class ScoreZone extends Square {
 
     draw(ctx) {
         ctx.fillStyle = 'rgba(0, 255, 0, 0.2)';
+        ctx.shadowColor = 'rgba(0, 255, 0, 0.2)';
+        ctx.shadowBlur = 20;
         ctx.fillRect(this.x, this.y, this.width, this.height);
     }
 }
