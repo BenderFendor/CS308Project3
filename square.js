@@ -11,6 +11,7 @@ class Square {
         this.startY = 0;
         this.endX = 0;
         this.endY = 0;
+        this.rotation = 0; // Add rotation angle
 
         if (imgSrc) {
             this.img = new Image();
@@ -71,6 +72,12 @@ class Square {
                 this.vy = -this.vy;
                 bounceSound.play();
             }
+            
+            // Add rotation based on velocity
+            this.rotation += Math.sqrt(this.vx * this.vx + this.vy * this.vy) * 0.05;
+            
+            // Keep rotation between 0 and 2π
+            this.rotation = this.rotation % (Math.PI * 2);
         }
     }
 
@@ -85,22 +92,29 @@ class Square {
             ctx.setLineDash([]);
         }
         if (this.img && this.img.complete && this.img.naturalWidth !== 0) {
-            ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
+            ctx.save();
+            //  Added this so it looks more like a ball
+            ctx.translate(this.x + this.width/2, this.y + this.height/2);
+            // Rotate
+            ctx.rotate(this.rotation);
+            // Draw image centered
+            ctx.drawImage(this.img, -this.width/2, -this.height/2, this.width, this.height);
+            ctx.restore();
         } else {
-            // Optionally draw a placeholder or do nothing
+            ctx.fillStyle = 'gray'; // This was the pre texture function
+            ctx.fillRect(this.x, this.y, this.width, this.height);
         }
     }
     collidesWith(other) {
-        // Check if the other object is a ScoreZone
+        // needed this so that thing doesn't bounce off the score thing
         if (other instanceof ScoreZone) {
-            // Only check for intersection, no physics response
             return (this.x < other.x + other.width &&
                     this.x + this.width > other.x &&
                     this.y < other.y + other.height &&
                     this.y + this.height > other.y);
         }
 
-        // First check if there's a collision
+        // check if there's a collision
         if (!(this.x < other.x + other.width &&
               this.x + this.width > other.x &&
               this.y < other.y + other.height &&
@@ -108,7 +122,7 @@ class Square {
             return false;
         }
 
-        // Calculate collision response for non-ScoreZone objects
+        // Maybe not needed like this but it works
         const overlapX = Math.min(
             this.x + this.width - other.x,
             other.x + other.width - this.x

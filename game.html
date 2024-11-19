@@ -22,7 +22,9 @@
     </div>
     <audio id="bounce" preload="auto" style="display:none" src="bounce.mp3"></audio>
     <audio id="scoresfx" preload="auto" style="display:none" src="score.wav"></audio>
+    <audio id="windsfx" preload="auto" style="display:none" src="windnoise.wav"></audio>
     <audio id="gameoversfx" preload="auto" style="display:none" src="gameover.wav"></audio>
+    <audio id="bgMusic" preload="auto" style="display:none" loop src="bgmusic.mp3"></audio>
     <script src="Square.js"></script>
     <script src="Obstacle.js"></script>
     <script src="ScoreZone.js"></script>
@@ -35,9 +37,11 @@
         var bounceSound = document.getElementById('bounce');
         var scoreSound = document.getElementById('scoresfx');
         var gameoverSound = document.getElementById('gameoversfx');
+        var windSound = document.getElementById('windsfx');
         var playerSquare;
-        var gameInterval;
         var animationFrameId;
+        var bgMusic;
+        var obstacleTimeout; // Declare a variable for setTimeout
 
         var god = new Image();
         god.src = "./god.png";
@@ -54,6 +58,18 @@
         obstacleImg.onload = () => console.log("Obstacle image loaded");
         obstacleImg.onerror = () => console.error("Error loading obstacle image");
 
+        function scheduleNextObstacle() { // This numbers are to show this fast real number should be lower
+            const baseInterval = 3000;   // Start at 3 seconds
+            const minInterval = 500;    // Minimum interval of 0.5 seconds
+            const intervalDecrease = 500; // Decrease interval by 500ms per score
+            const newInterval = Math.max(baseInterval - (score * intervalDecrease), minInterval);
+
+            obstacleTimeout = setTimeout(() => {
+                generateObstacle();
+                scheduleNextObstacle();
+            }, newInterval);
+        }
+
         function initialize() {
             // Show score display
             document.getElementById('score').style.display = 'block';
@@ -63,7 +79,7 @@
             document.getElementById('game-over-overlay').style.visibility = 'hidden';
             // Clear existing game state
             cancelAnimationFrame(animationFrameId);
-            clearInterval(gameInterval);
+            clearTimeout(obstacleTimeout); // Clear the obstacle timeout
             
             // Reset game variables
             score = 0;
@@ -74,9 +90,12 @@
             // Create new player
             playerSquare = new Square(100, canvas.height / 2 - 10, 50, 50, god.src);
             
-            // Set up obstacle generation
-            gameInterval = setInterval(generateObstacle, 5000);
+            scheduleNextObstacle(); // Start obstacle scheduling
             
+            bgMusic = document.getElementById('bgMusic');
+            bgMusic.play();
+            bgMusic.volume = 0.2; // It's lowkey loud
+
             // Start game loop
             update();
         }
@@ -111,6 +130,8 @@
                 var mouseY = e.clientY - rect.top;
 
                 playerSquare.endDrag(mouseX, mouseY);
+                windSound.volume = 0.2;
+                windSound.play();
             }
         });
 
@@ -156,6 +177,7 @@
                     score++;
                     scoreSound.play();
                     zone.counted = true;
+                    // No need to update obstacle interval here
                 }
 
                 // Remove off-screen zones
@@ -185,8 +207,9 @@
     
         function gameOver() {
             cancelAnimationFrame(animationFrameId);
-            clearInterval(gameInterval);
+            clearTimeout(obstacleTimeout); // Clear the obstacle timeout
             gameoverSound.play();
+            bgMusic.pause();
 
             // Draws the overlay and removes the score on the top right corner
 
